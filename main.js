@@ -96,7 +96,7 @@ async function updateHandler(client, config){ // для изменения ко�
 
     CurHandler = createHandler(client, botEntity);
     client.addEventHandler(CurHandler, new NewMessage({
-        //incoming: true,
+        incoming: true,
         chats: chats.map(chat => chat.id)
     }));
 
