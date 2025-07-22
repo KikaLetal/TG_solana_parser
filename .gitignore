@@ -1,2 +1,13 @@
+# Игнорируем логи
 logs/
-*.log
+
+# Игнорируем переменные окружения и конфиги
+.env
+session.json
+config.json
+
+# Игнорируем node_modules
+node_modules/
+
+# Игнорируем системные файлы
+.DS_Store
