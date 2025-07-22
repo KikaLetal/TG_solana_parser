@@ -2,39 +2,33 @@ import { PublicKey } from "@solana/web3.js"
 
 export async function extractSolanaAddress(text) {
     const base58chars = '1-9A-HJ-NP-Za-km-z'; // набор символов для base58
+
     const regex = new RegExp(`[${base58chars}]{43,44}`, 'g'); // выражение на проверку
-    const solanaregex = /https?:\/\/\S*solana\S*/g; // ссылка на солану
-    const Sol = /SOL/i;
 
-    const allLinks = text.match(solanaregex) || [];
-
-    if (allLinks.length === 0 && !Sol.test(text)) return ""; // проверяем, что сообщение содержит нужный адрес с solana или ключевые слова
+    const keywords = ['pump','bonk','moon','boop']; // ланчпады солановских токенов
+    const KeywordsRegex = keywords.map(word => // проверяем что содержит
+        new RegExp(word + '$', 'i')
+    ); 
 
     const matches = text.match(regex);
-    if (!matches) return ""; // проверяем есть ли вообще необходимые вхождения
+    if (!matches) return []; // проверяем есть ли вообще необходимые вхождения
 
-    const uniqueMatches = [...new Set(matches)]
+    const uniqueMatches = [...new Set(matches)];
+    const validMatches = [];
+
     for(const addr of uniqueMatches){
-        if(!allLinks.some(link => link.includes(addr))){
+        if(KeywordsRegex.some( r => r.test(addr))){
             try{
                 new PublicKey(addr);
-                return addr;
+                validMatches.push(addr);
             }catch(e){
                 continue;
             }
         }
-    }
-    let fallbackAddress;
-    for(const addr of uniqueMatches){
-        try{
-            new PublicKey(addr);
-            fallbackAddress = addr;
-        }catch(e){
-            continue;
-        }
         
     }
-    return fallbackAddress || "";
+
+    return validMatches;
 
 }
 

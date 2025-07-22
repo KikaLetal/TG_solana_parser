@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { loadConfig } from "./configManager.js";
 import { loadSession, saveSession } from "./sessionManager.js";
+import { isProcessed, markProcessed } from "./processedContractsManager.js";
 
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
@@ -43,20 +44,24 @@ function createHandler(client, botEntity){
         try {
             const sender = await client.getEntity(event.message.peerId);
             const text = event.message.message;
-            const tokenAddress  = await extractSolanaAddress(text);
+            const tokenAddresses = await extractSolanaAddress(text);
 
             if (!botEntity) {
                 console.log("Целевой бот не задан, сообщение не отправляется");
                 return;
             }
 
-            try{
-                if (tokenAddress  && tokenAddress .trim().length > 0){
-                    await client.sendMessage(botEntity, { message: tokenAddress });
-                    await log(`@${sender.username || sender.id}`, tokenAddress, event.message.date);
+            if(tokenAddresses.length > 0){
+                for (const address of tokenAddresses){
+                    if(await isProcessed(address)) continue;
+                    try{
+                        await client.sendMessage(botEntity, { message: address });
+                        await markProcessed(address);
+                        await log(`@${sender.username || sender.id}`, address, event.message.date);
+                    } catch(e){
+                        console.log("Не удалось отправить сообщение: ", e)
+                    }
                 }
-            } catch(e){
-                console.log("Не удалось отправить сообщение: ", e)
             }
         
         } catch (e) {
@@ -96,7 +101,7 @@ async function updateHandler(client, config){ // для изменения ко�
 
     CurHandler = createHandler(client, botEntity);
     client.addEventHandler(CurHandler, new NewMessage({
-        incoming: true,
+        incoming: true, 
         chats: chats.map(chat => chat.id)
     }));
 

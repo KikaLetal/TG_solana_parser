@@ -5,6 +5,7 @@ logs/
 .env
 session.json
 config.json
+ProcessedContracts.json
 
 # Игнорируем node_modules
 node_modules/
