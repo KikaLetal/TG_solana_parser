@@ -15,6 +15,29 @@ import { log } from "./logerManager.js"
 const apiId = Number(process.env.apiId);
 const apiHash = process.env.apiHash;
 
+async function authorizeClient(client){
+    await client.start({
+            phoneNumber: async () => {
+                while(true){
+                    const rawNumber = await input.text("Введите номер: ");
+                    const formattedPhoneNumber = await formatPhoneNumber(rawNumber);
+                    if(formattedPhoneNumber){
+                        return formattedPhoneNumber;
+                    }
+                    else {
+                        console.log("Неверный номер. Попробуйте снова");
+                    }
+                } 
+            },
+            password: async () => await input.text("Введите пароль: "),
+            phoneCode: async () =>
+                await input.text("Введите полученный код: "),
+            onError: (err) => console.log(err),
+        });
+        await saveSession(client.session.save());
+        console.log("Сессия успешно сохранена.");
+}
+
 function createHandler(client, botEntity){
     return async function handler(event) {
         try {
@@ -83,38 +106,33 @@ async function updateHandler(client, config){ // для изменения ко�
 
 async function main() {
     const rawStringSession = await loadSession();
-    let stringSession;
-    try{
-        stringSession = new StringSession(rawStringSession);
-    }catch(e){
-        console.log("сессия битая или устарела.");
-        stringSession = new StringSession("");
-    }
+    let stringSession = new StringSession(rawStringSession);
+    let isNewSession = false;
 
-    const client = new TelegramClient(stringSession, apiId, apiHash, {
+    let client = new TelegramClient(stringSession, apiId, apiHash, {
         connectionRetries: 5,
     });
-    await client.start({
-        phoneNumber: async () => {
-            while(true){
-                const rawNumber = await input.text("Введите номер: ");
-                const formattedPhoneNumber = await formatPhoneNumber(rawNumber);
-                if(formattedPhoneNumber){
-                    return formattedPhoneNumber;
-                }
-                else {
-                    console.log("Неверный номер. Попробуйте снова");
-                }
-            } 
-        },
-        password: async () => await input.text("Введите пароль: "),
-        phoneCode: async () =>
-            await input.text("Введите полученный код: "),
-        onError: (err) => console.log(err),
-    });
 
+    try {
+        await client.connect();
+        await client.getMe();
+    } catch (e) {
+        console.log("Cессия битая или устарела. ", e.message || e);
+        try{ client.disconnect(); } catch{}
+
+        stringSession = new StringSession("");
+        isNewSession = true;
+
+        client = new TelegramClient(stringSession, apiId, apiHash, {
+        connectionRetries: 5,
+        });
+    }
+
+    if(isNewSession){
+        await authorizeClient(client);
+    }
     console.log("Вы подключены.");
-    await saveSession(client.session.save());
+
 
     const config = await loadConfig(); // сам конфиг
 
@@ -136,7 +154,7 @@ async function main() {
         try {
             await client.getMe();
         } catch (e) {
-            console.error("[PING] Ошибка соединения:", e.message || e);
+            console.log("[PING] Ошибка соединения:", e.message || e);
             process.exit(1);
         }
     }, 10 * 60 * 1000);

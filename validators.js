@@ -4,7 +4,7 @@ export async function extractSolanaAddress(text) {
     const base58chars = '1-9A-HJ-NP-Za-km-z'; // набор символов для base58
     const regex = new RegExp(`[${base58chars}]{43,44}`, 'g'); // выражение на проверку
     const solanaregex = /https?:\/\/\S*solana\S*/g; // ссылка на солану
-    const Sol = /SOL/;
+    const Sol = /SOL/i;
 
     const allLinks = text.match(solanaregex) || [];
 
