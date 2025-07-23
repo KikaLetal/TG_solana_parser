@@ -7,6 +7,7 @@ export async function showMainMenu() {
   console.log("2. Удалить чат");
   console.log("3. Показать список чатов");
   console.log("4. Установить целевого бота");
+  console.log("5. Завершить настройку");
 
   const choice = await input.text("Ваш выбор: ");
   return choice;

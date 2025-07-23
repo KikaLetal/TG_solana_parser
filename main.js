@@ -167,6 +167,11 @@ async function main() {
     while(true){ // команды управления
         const choice = await showMainMenu();
 
+        if(choice === "5"){
+            console.log("Завершение настройки.");
+            break;
+        }
+
         switch(choice){
             case "1":
                 const newChat = await input.text("Введите username чата: ");
@@ -196,6 +201,8 @@ async function main() {
 
         await saveSession(client.session.save());
     }
+
+    process.exit(0); 
 }
 
 (async () => {
