@@ -162,7 +162,7 @@ async function main() {
             console.log("[PING] Ошибка соединения:", e.message || e);
             process.exit(1);
         }
-    }, 10 * 60 * 1000);
+    }, 60 * 1000);
 
     while(true){ // команды управления
         const choice = await showMainMenu();
